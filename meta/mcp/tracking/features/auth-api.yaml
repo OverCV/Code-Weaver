@@ -1,0 +1,27 @@
+id: auth-api
+nombre: "API de Autenticación y Gestión de Usuarios"
+descripcion: "Implementación de una API RESTful con FastAPI que incluye autenticación JWT, gestión de usuarios con roles, registro público, documentación Swagger y endpoint de salud."
+progreso: 100
+fecha_incio: 2025-06-07T22:57:15.934Z
+tareas:
+  - id: config-inicial
+    desc: "Configuración inicial del proyecto (estructura, dependencias, .env)"
+    estado: "completada"
+  - id: db-modelos
+    desc: "Implementación de modelos de datos y conexión a base de datos"
+    estado: "completada"
+  - id: auth-jwt
+    desc: "Implementación de autenticación JWT (login, verificación)"
+    estado: "completada"
+  - id: usuarios-crud
+    desc: "Implementación de endpoints para gestión de usuarios y registro público"
+    estado: "completada"
+  - id: health-docs
+    desc: "Implementación de endpoint de salud y configuración de Swagger"
+    estado: "completada"
+  - id: pruebas
+    desc: "Implementación de pruebas unitarias y de integración"
+    estado: "completada"
+pruebas:
+  unitarias: Pruebas unitarias para cada capa del sistema
+  integracion: Pruebas de integración para endpoints

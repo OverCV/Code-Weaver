@@ -1,0 +1,23 @@
+id: gestion-usuarios
+nombre: "Gestión de Usuarios con Autenticación JWT"
+descripcion: "Implementar sistema de usuarios con registro, login, listado y roles"
+progreso: 10
+fecha_incio: 2025-06-07T22:09:54.893Z
+tareas:
+  - id: modelo-usuario
+    desc: "Crear modelo de usuario con campos básicos y rol"
+    estado: "pendiente"
+  - id: endpoint-registro
+    desc: "Implementar endpoint de registro de usuarios"
+    estado: "pendiente"
+  - id: endpoint-login
+    desc: "Crear endpoint de login con generación de JWT"
+    estado: "pendiente"
+  - id: endpoint-listar
+    desc: "Implementar endpoint para listar usuarios"
+    estado: "pendiente"
+  - id: health-check
+    desc: "Añadir endpoint de health check"
+    estado: "pendiente"
+pruebas:
+  unitarias: Crear tests para cada endpoint y funcionalidad de usuarios

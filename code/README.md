@@ -1,198 +1,101 @@
-# Sistema de Predicción de Riesgo Cardiovascular
+# API de Autenticación y Gestión de Usuarios
 
-Sistema para predicción de riesgo cardiovascular basado en factores clínicos, con entrenamiento de modelos y API RESTful.
+Esta es una API RESTful desarrollada con FastAPI que proporciona funcionalidades de autenticación JWT y gestión de usuarios con roles.
 
-## Estructura del proyecto
+## Características
+
+- Autenticación mediante tokens JWT
+- Gestión de usuarios con diferentes roles (admin, user, guest)
+- Documentación interactiva con Swagger UI
+- Endpoint de salud para monitoreo
+- Estructura de proyecto en capas (arquitectura limpia)
+- Tests unitarios y de integración
+
+## Estructura del Proyecto
 
 ```
-├── README.md
-├── api/
-│   ├── .env/
-│   │   └── api.env
-│   ├── README.md
+code/
+├── app/
+│   ├── api/
+│   │   ├── api_v1/
+│   │   │   ├── endpoints/
+│   │   │   │   ├── auth.py
+│   │   │   │   └── users.py
+│   │   │   └── api.py
+│   │   └── deps.py
 │   ├── core/
-│   │   ├── classes/
-│   │   │   ├── configuracion.py
-│   │   │   ├── schemas/
-│   │   │   │   └── riesgo_cv.py
-│   │   │   └── tables.py
-│   │   ├── data/
-│   │   │   ├── db_connector.py
-│   │   │   └── motors.py
-│   │   ├── middlewares/
-│   │   │   ├── auth.py
-│   │   │   ├── excepcion.py
-│   │   │   └── perfilado.py
-│   │   ├── repository/
-│   │   │   └── predicciones.py
-│   │   ├── routes/
-│   │   │   ├── autenticacion.py
-│   │   │   └── riesgo_cv.py
-│   │   └── services/
-│   │       └── riesgo_cv.py
-│   ├── main.py
+│   │   └── config.py
+│   ├── db/
+│   │   ├── init_db.py
+│   │   └── session.py
 │   ├── models/
-│   │   ├── README.md
-│   │   └── r_cardio/
-│   │       ├── cardio_features.txt
-│   │       ├── cardio_model.pkl
-│   │       ├── comparativa_modelos.csv
-│   │       ├── feature_importance.csv
-│   │       ├── feature_importance.png
-│   │       ├── features.txt
-│   │       ├── matriz_confusion.png
-│   │       ├── mejor_modelo.pkl
-│   │       ├── rf_cardio_features.txt
-│   │       ├── rf_cardio_scaler.pkl
-│   │       ├── roc_curves.png
-│   │       └── scaler.pkl
-│   ├── requirements.txt
-│   ├── run.py
-│   ├── test_api.py
-│   └── utils/
-│       ├── __init__.py
-│       └── update_models.py
-├── http_test.py
-├── mcp/
-│   ├── .env
-│   ├── app/
-│   │   ├── main.ts
-│   │   ├── shared/
-│   │   │   ├── database.mcp.ts
-│   │   │   └── index.ts
-│   │   └── tools/
-│   │       └── database.ts
-│   ├── package-lock.json
-│   └── temp/
-│       ├── database.mcp.ts
-│       └── testfile.txt
-├── models/
-│   └── r_cardio/
-│       ├── cardio_features.txt
-│       ├── cardio_model.pkl
-│       ├── comparativa_modelos.csv
-│       ├── feature_importance.csv
-│       ├── feature_importance.png
-│       ├── features.txt
-│       ├── matriz_confusion.png
-│       ├── mejor_modelo.pkl
-│       ├── rf_cardio_features.txt
-│       ├── rf_cardio_model.pkl
-│       ├── rf_cardio_scaler.pkl
-│       ├── roc_curves.png
-│       └── scaler.pkl
-├── requirements.txt
-├── src/
-│   ├── __init__.py
-│   ├── config/
-│   │   ├── __init__.py
-│   │   ├── logging_config.py
-│   │   └── settings.py
-│   ├── data/
-│   │   ├── __init__.py
-│   │   ├── datasets/
-│   │   │   ├── __init__.py
-│   │   │   ├── rehospitalizacion/
-│   │   │   └── riesgo_cardiovascular/
-│   │   │       ├── enfermedades_cardiovasculares.csv
-│   │   │       ├── heart+disease/
-│   │   │       │   ├── Index
-│   │   │       │   ├── WARNING
-│   │   │       │   ├── ask-detrano
-│   │   │       │   ├── bak
-│   │   │       │   ├── cleve.mod
-│   │   │       │   ├── cleveland.data
-│   │   │       │   ├── costs/
-│   │   │       │   │   ├── Index
-│   │   │       │   │   ├── heart-disease.README
-│   │   │       │   │   ├── heart-disease.cost
-│   │   │       │   │   ├── heart-disease.delay
-│   │   │       │   │   ├── heart-disease.expense
-│   │   │       │   │   └── heart-disease.group
-│   │   │       │   ├── heart-disease.names
-│   │   │       │   ├── hungarian.data
-│   │   │       │   ├── link.txt
-│   │   │       │   ├── long-beach-va.data
-│   │   │       │   ├── new.data
-│   │   │       │   ├── processed.cleveland.data
-│   │   │       │   ├── processed.hungarian.data
-│   │   │       │   ├── processed.switzerland.data
-│   │   │       │   ├── processed.va.data
-│   │   │       │   ├── reprocessed.hungarian.data
-│   │   │       │   └── switzerland.data
-│   │   │       ├── hospitalizacion_dataset.csv
-│   │   │       └── log-reg/
-│   │   │           ├── framingham.csv
-│   │   │           └── link.txt
-│   │   ├── etl/
-│   │   │   ├── __init__.py
-│   │   │   ├── extractors.py
-│   │   │   ├── loaders.py
-│   │   │   └── transformers.py
-│   │   ├── preprocessing/
-│   │   │   ├── __init__.py
-│   │   │   ├── encoders.py
-│   │   │   └── feature_engineering.py
-│   │   └── validation/
-│   │       ├── __init__.py
-│   │       ├── data_quality.py
-│   │       └── schema_validator.py
-│   ├── main.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── asistencias/
 │   │   ├── base.py
-│   │   ├── flujo_atencion/
-│   │   ├── hospitalizaciones/
-│   │   └── riesgo_cardiovascular/
-│   │       ├── __init__.py
-│   │       ├── comparador.py
-│   │       ├── evaluator.py
-│   │       ├── feature_selector.py
-│   │       ├── pipeline.py
-│   │       └── trainer.py
+│   │   └── user.py
+│   ├── schemas/
+│   │   └── user.py
+│   ├── services/
+│   │   ├── auth.py
+│   │   └── user.py
 │   └── utils/
-│       ├── __init__.py
-│       ├── metrics.py
-│       ├── model_registry.py
-│       └── visualizations.py
-├── test_cv_api.py
-└── tests/
-    ├── __init__.py
-    ├── cv_training_test.py
-    ├── mini_test.py
-    ├── test_api.py
-    ├── test_api_riesgo_cv.py
-    └── test_riesgo_cv.py
-
+├── tests/
+│   ├── conftest.py
+│   ├── test_api.py
+│   ├── test_auth_service.py
+│   └── test_user_service.py
+├── .env
+├── main.py
+├── requirements.txt
+└── run.py
 ```
 
-## Configuración
+## Instalación y Configuración
 
-1. Crear entorno virtual: `python -m venv .venv`
-2. Activar entorno: `.venv\Scripts\activate` (Windows) o `source .venv/bin/activate` (Linux/Mac)
-3. Instalar dependencias:
-   - Para el módulo ML: `pip install -r requirements.txt`
-   - Para la API: `pip install -r api/requirements.txt`
-
-## Uso
-
-### Entrenamiento de modelos
+1. Clonar el repositorio
+2. Instalar dependencias:
 
 ```bash
-python src/models/riesgo_cardiovascular/comparador.py
+pip install -r requirements.txt
 ```
 
-### Ejecución de la API
+3. Configurar variables de entorno (o usar el archivo `.env` incluido)
+4. Ejecutar la aplicación:
 
 ```bash
-python api/run.py
+python run.py
 ```
 
 ## Endpoints API
 
-- `GET /` - Estado del servicio
-- `GET /riesgo-cardiovascular/info` - Información del modelo
-- `POST /riesgo-cardiovascular/predecir` - Predecir riesgo cardiovascular
-- `GET /riesgo-cardiovascular/predicciones/{paciente_id}` - Historial de predicciones
-- `GET /riesgo-cardiovascular/estado-salud/{paciente_id}` - Estado general de salud
+### Autenticación
+
+- `POST /api/v1/auth/login` - Iniciar sesión y obtener token JWT
+
+### Usuarios
+
+- `POST /api/v1/users/register` - Registro público de usuarios
+- `GET /api/v1/users/` - Listar todos los usuarios (admin)
+- `POST /api/v1/users/` - Crear un nuevo usuario (admin)
+- `GET /api/v1/users/me` - Obtener información del usuario actual
+- `PUT /api/v1/users/me` - Actualizar información del usuario actual
+- `GET /api/v1/users/{user_id}` - Obtener un usuario por ID
+- `PUT /api/v1/users/{user_id}` - Actualizar un usuario (admin)
+- `DELETE /api/v1/users/{user_id}` - Eliminar un usuario (admin)
+
+### Otros
+
+- `GET /health` - Verificar el estado de la API
+
+## Documentación
+
+La documentación interactiva está disponible en:
+
+- Swagger UI: `/docs`
+- ReDoc: `/redoc`
+
+## Tests
+
+Para ejecutar los tests:
+
+```bash
+pytest
+```

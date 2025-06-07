@@ -1,110 +1,120 @@
-import requests
-import json
+from fastapi.testclient import TestClient
+import pytest
+from sqlalchemy.orm import Session
+
 import sys
-import subprocess
-import time
 import os
-from pathlib import Path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Base URL para la API
-BASE_URL = "http://localhost:8000"
+from main import app
+from app.core.config import settings
+from app.models.user import Role
+from app.services.user import create_user
+from app.schemas.user import UserCreate
 
-def test_health_endpoint():
-    """Prueba el endpoint de salud de la API"""
-    response = requests.get(f"{BASE_URL}/")
-    print(f"Status code: {response.status_code}")
-    print(f"Response: {response.json()}")
-    return response.status_code == 200
+client = TestClient(app)
 
-def test_model_info():
-    """Prueba el endpoint de información del modelo"""
-    response = requests.get(f"{BASE_URL}/riesgo-cardiovascular/info")
-    print(f"Status code: {response.status_code}")
-    print(f"Response: {json.dumps(response.json(), indent=2)}")
-    return response.status_code == 200
+def test_health_check():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
 
-def test_prediction():
-    """Prueba el endpoint de predicción"""
-    test_data = {
-        "edad": 50,
-        "genero": 1,
-        "estatura": 170,
-        "peso": 80,
-        "presion_sistolica": 140,
-        "presion_diastolica": 90,
-        "colesterol": 2,
-        "glucosa": 1,
-        "tabaco": 1,
-        "alcohol": 0,
-        "act_fisica": 0
+def test_login(db: Session):
+    # Crear un usuario para pruebas
+    user_in = UserCreate(
+        email="test_login@example.com",
+        password="testpassword",
+        is_active=True,
+        role=Role.ADMIN
+    )
+    create_user(db, user_in=user_in)
+    
+    # Probar login exitoso
+    login_data = {
+        "username": "test_login@example.com",
+        "password": "testpassword",
+    }
+    response = client.post(f"{settings.API_V1_PREFIX}/auth/login", data=login_data)
+    
+    assert response.status_code == 200
+    tokens = response.json()
+    assert "access_token" in tokens
+    assert tokens["token_type"] == "bearer"
+    
+    # Probar login con credenciales incorrectas
+    login_data = {
+        "username": "test_login@example.com",
+        "password": "wrongpassword",
+    }
+    response = client.post(f"{settings.API_V1_PREFIX}/auth/login", data=login_data)
+    
+    assert response.status_code == 401
+
+def test_create_user(db: Session):
+    # Crear un usuario administrador para obtener token
+    admin_in = UserCreate(
+        email="test_admin@example.com",
+        password="testpassword",
+        is_active=True,
+        role=Role.ADMIN
+    )
+    create_user(db, user_in=admin_in)
+    
+    # Obtener token de administrador
+    login_data = {
+        "username": "test_admin@example.com",
+        "password": "testpassword",
+    }
+    response = client.post(f"{settings.API_V1_PREFIX}/auth/login", data=login_data)
+    tokens = response.json()
+    admin_token = tokens["access_token"]
+    
+    # Crear un nuevo usuario usando el token de administrador
+    new_user = {
+        "email": "new_user@example.com",
+        "password": "newpassword",
+        "is_active": True,
+        "role": "user"
     }
     
-    response = requests.post(f"{BASE_URL}/riesgo-cardiovascular/predecir", json=test_data)
-    print(f"Status code: {response.status_code}")
-    print(f"Response: {json.dumps(response.json(), indent=2)}")
-    return response.status_code == 200
+    response = client.post(
+        f"{settings.API_V1_PREFIX}/users/",
+        json=new_user,
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == new_user["email"]
+    assert data["is_active"] == new_user["is_active"]
+    assert data["role"] == new_user["role"]
+    assert "id" in data
 
-def start_api_server():
-    """Inicia el servidor API en un proceso separado"""
-    api_dir = Path(__file__).parent.parent / "api"
-    env_path = api_dir / ".env" / "api.env"
+def test_get_users(db: Session):
+    # Crear un usuario administrador para obtener token
+    admin_in = UserCreate(
+        email="test_get_users@example.com",
+        password="testpassword",
+        is_active=True,
+        role=Role.ADMIN
+    )
+    create_user(db, user_in=admin_in)
     
-    # Verificar que existe el archivo run.py
-    run_script = api_dir / "run.py"
-    if not run_script.exists():
-        print(f"ERROR: No se encontró el script {run_script}")
-        return None
+    # Obtener token de administrador
+    login_data = {
+        "username": "test_get_users@example.com",
+        "password": "testpassword",
+    }
+    response = client.post(f"{settings.API_V1_PREFIX}/auth/login", data=login_data)
+    tokens = response.json()
+    admin_token = tokens["access_token"]
     
-    # Iniciar el servidor
-    os.chdir(api_dir.parent)  # Cambiar al directorio code/
-    cmd = [sys.executable, str(run_script)]
+    # Obtener usuarios
+    response = client.get(
+        f"{settings.API_V1_PREFIX}/users/",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
     
-    try:
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        # Esperar a que el servidor esté listo
-        print("Esperando a que el servidor API esté listo...")
-        time.sleep(5)
-        
-        return process
-    except Exception as e:
-        print(f"Error al iniciar el servidor API: {e}")
-        return None
-
-def main():
-    # Iniciar el servidor API
-    server_process = start_api_server()
-    if not server_process:
-        print("No se pudo iniciar el servidor API. Abortando pruebas.")
-        return
-    
-    try:
-        # Ejecutar pruebas
-        print("\n===== Prueba de endpoint de salud =====")
-        health_ok = test_health_endpoint()
-        
-        print("\n===== Prueba de información del modelo =====")
-        info_ok = test_model_info()
-        
-        print("\n===== Prueba de predicción =====")
-        prediction_ok = test_prediction()
-        
-        # Resumen
-        print("\n===== Resumen de pruebas =====")
-        print(f"Endpoint de salud: {'OK' if health_ok else 'FALLO'}")
-        print(f"Información del modelo: {'OK' if info_ok else 'FALLO'}")
-        print(f"Predicción: {'OK' if prediction_ok else 'FALLO'}")
-        
-    finally:
-        # Terminar el servidor
-        print("\nDeteniendo el servidor API...")
-        server_process.terminate()
-        server_process.wait(timeout=5)
-
-if __name__ == "__main__":
-    main()
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)

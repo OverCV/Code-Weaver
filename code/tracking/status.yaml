@@ -1,7 +1,0 @@
-nombre: "Sistema Módulos de IA"
-version: "0.1.5"
-actualizacion: "2025-04-19"
-progreso_global: 40
-funcionalidades_activas: [[["riesgo-cardiovascular", "postgre-conexion"], db-integration], optimizacion-modelo-cv]
-proximos_objetivos: ["optimizacion-modelos", "consultas-avanzadas-bd", "implementar-flujo-pacientes",]
-notas: "Integrada conexión a base de datos para consultas de predicciones cardiovasculares"

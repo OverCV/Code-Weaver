@@ -1,7 +1,7 @@
-nombre: "Sistema Predictivo Cardiovascular"
-version: "0.1.0"
-actualizacion: "2025-04-20"
+nombre: "Sistema agentico de MCP"
+version: "0.0.1"
+actualizacion: "2025-05-16"
 progreso_global: 0
-funcionalidades_activas: []
+funcionalidades_activas: [[gestion-usuarios], auth-api]
 proximos_objetivos: []
 notas: "Iniciando proyecto"
